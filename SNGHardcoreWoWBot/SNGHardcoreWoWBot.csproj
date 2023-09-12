@@ -16,4 +16,8 @@
     <PackageReference Include="supabase-csharp" Version="0.13.1" />
   </ItemGroup>
 
+  <ItemGroup>
+    <Folder Include="Models\" />
+  </ItemGroup>
+
 </Project>
