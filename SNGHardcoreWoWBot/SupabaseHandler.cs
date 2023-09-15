@@ -38,5 +38,24 @@ namespace SupabaseStuff
 
             await supabase.From<Characters>().Insert(model);
         }
+
+        public static async Task<List<Characters>> RetrieverAllPlayerCharacters(DiscordUser discordUser)
+        {
+            List<Characters> list = new List<Characters>();
+
+            var player = await supabase.From<Players>().Where(x => x.DiscordID == discordUser.Id).Get();
+
+            if (player != null)
+            {
+                var result = await supabase.From<Characters>()
+                    .Select("*")
+                    .Where(x => x.CharacterOwner == discordUser.Id)
+                    .Get();
+
+                list = result.Models;
+            }
+
+            return list;
+        }
     }
 }

@@ -10,7 +10,7 @@ namespace SNGHardcoreWoWBot.Models
         public int Id { get; set; }
 
         [Column("character_owner")]
-        public int CharacterOwner { get; set; }
+        public ulong CharacterOwner { get; set; }
 
         [Column("character_name")]
         public string CharacterName { get; set; } = string.Empty;

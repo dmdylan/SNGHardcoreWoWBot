@@ -27,5 +27,16 @@ namespace SNGHardcoreWoWBot.Commands
         {
             await commandContext.RespondAsync($"{characterName} {status}");
         }
+
+        //TODO: make check if player has character
+        [Command("characterlist")]
+        public async Task GetAllCharacters(CommandContext commandContext)
+        {
+            await commandContext.TriggerTypingAsync();
+
+            var list = await SupabaseHandler.RetrieverAllPlayerCharacters(commandContext.User);
+
+            await commandContext.RespondAsync(list.Count.ToString());
+        }
     }
 }
