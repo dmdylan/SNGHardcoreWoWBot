@@ -4,7 +4,7 @@ using Postgrest.Models;
 namespace SNGHardcoreWoWBot.Models
 {
     [Table("characters")]
-    internal class Characters : BaseModel
+    internal class Character : BaseModel
     {
         [PrimaryKey("id", false)]
         public int Id { get; set; }

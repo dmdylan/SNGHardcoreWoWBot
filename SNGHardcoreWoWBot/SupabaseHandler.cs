@@ -17,18 +17,28 @@ namespace SupabaseStuff
 
         public static async Task AddNewPlayer(DiscordUser user)
         {
-            var model = new Players
+            var model = new Player
             {
                 DiscordID = user.Id,
                 DiscordName = user.Username
             };
 
-            await supabase.From<Players>().Insert(model);
+            await supabase.From<Player>().Insert(model);
+        }
+
+        public static async Task<Player> RetrievePlayer(DiscordUser user)
+        {
+            var result = await supabase.From<Player>().Where(x => x.DiscordID == user.Id).Get();
+
+            if (result != null)
+                return result.Model;
+            else
+                return null;
         }
 
         public static async Task AddNewCharacter(DiscordUser user, string characterName, string characterRace, string characterClass)
         {
-            var model = new Characters
+            var model = new Character
             {
                 CharacterName = characterName,
                 CharacterRace = characterRace,
@@ -36,18 +46,18 @@ namespace SupabaseStuff
                 CharacterAliveStatus = true
             };
 
-            await supabase.From<Characters>().Insert(model);
+            await supabase.From<Character>().Insert(model);
         }
 
-        public static async Task<List<Characters>> RetrieverAllPlayerCharacters(DiscordUser discordUser)
+        public static async Task<List<Character>> RetrieverAllPlayerCharacters(DiscordUser discordUser)
         {
-            List<Characters> list = new List<Characters>();
+            List<Character> list = new List<Character>();
 
-            var player = await supabase.From<Players>().Where(x => x.DiscordID == discordUser.Id).Get();
+            var player = RetrievePlayer(discordUser);
 
             if (player != null)
             {
-                var result = await supabase.From<Characters>()
+                var result = await supabase.From<Character>()
                     .Select("*")
                     .Where(x => x.CharacterOwner == discordUser.Id)
                     .Get();

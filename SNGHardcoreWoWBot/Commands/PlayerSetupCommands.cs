@@ -4,7 +4,7 @@ using SupabaseStuff;
 
 namespace SNGHardcoreWoWBot.Commands
 {
-    public class BaseCommands : BaseCommandModule
+    public class PlayerSetupCommands : BaseCommandModule
     {
         [Command("register")]
         public async Task RegisterPlayerCommand(CommandContext commandContext)
@@ -20,23 +20,6 @@ namespace SNGHardcoreWoWBot.Commands
         public async Task RegisterPlayerCharacterCommand(CommandContext commandContext, string characterName)
         {
             await commandContext.RespondAsync($"{characterName} added for {commandContext.User.Username}");
-        }
-
-        [Command("characterstatus")]
-        public async Task ChangeCharacterStatus(CommandContext commandContext, string characterName, string status)
-        {
-            await commandContext.RespondAsync($"{characterName} {status}");
-        }
-
-        //TODO: make check if player has character
-        [Command("characterlist")]
-        public async Task GetAllCharacters(CommandContext commandContext)
-        {
-            await commandContext.TriggerTypingAsync();
-
-            var list = await SupabaseHandler.RetrieverAllPlayerCharacters(commandContext.User);
-
-            await commandContext.RespondAsync(list.Count.ToString());
         }
     }
 }

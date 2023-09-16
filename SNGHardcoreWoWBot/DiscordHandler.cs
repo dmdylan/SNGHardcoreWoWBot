@@ -22,7 +22,8 @@ namespace DiscordStuff
                 StringPrefixes = new[] { "!" }
             });
 
-            commands.RegisterCommands<BaseCommands>();
+            commands.RegisterCommands<PlayerSetupCommands>();
+            commands.RegisterCommands<CharacterCommands>();
 
             await discord.ConnectAsync();
         }
