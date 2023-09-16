@@ -36,6 +36,11 @@ namespace SupabaseStuff
                 return null;
         }
 
+        public static async Task RemovePlayer(DiscordUser user)
+        {
+            await supabase.From<Player>().Where(x => x.DiscordID == user.Id).Delete();
+        }
+
         public static async Task AddNewCharacter(DiscordUser user, string characterName, string characterRace, string characterClass)
         {
             var model = new Character
