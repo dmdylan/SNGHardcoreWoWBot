@@ -16,6 +16,8 @@ namespace SupabaseStuff
             await supabase.InitializeAsync();
         }
 
+        #region Player Tasks
+
         public static async Task AddNewPlayer(DiscordUser user)
         {
             var model = new Player
@@ -42,6 +44,10 @@ namespace SupabaseStuff
             await supabase.From<Player>().Where(x => x.DiscordID == user.Id).Delete();
         }
 
+        #endregion Player Tasks
+
+        #region Character Tasks
+
         public static async Task AddNewCharacter(DiscordUser user, string characterName, string characterRace, string characterClass)
         {
             var model = new Character
@@ -57,7 +63,7 @@ namespace SupabaseStuff
 
         public static async Task<Character> RetrieveSinglePlayerCharacter(DiscordUser user, string characterName)
         {
-            var player = RetrievePlayer(user);
+            var player = await RetrievePlayer(user);
 
             var character = await supabase.From<Character>().Where(x => x.CharacterOwner == user.Id 
             && x.CharacterName.ToLower() == characterName.ToLower()).Get();
@@ -69,7 +75,7 @@ namespace SupabaseStuff
         {
             List<Character> list = new List<Character>();
 
-            var player = RetrievePlayer(discordUser);
+            var player = await RetrievePlayer(discordUser);
 
             if (player != null)
             {
@@ -83,5 +89,42 @@ namespace SupabaseStuff
 
             return list;
         }
+
+        public static async Task<bool> UpdateCharacterStatus(DiscordUser discordUser, string characterName, string status)
+        {
+            var character = await RetrieveSinglePlayerCharacter(discordUser, characterName);
+
+            if (character != null)
+            {
+                if (status.ToLower() == "dead")
+                {
+                    await supabase.From<Character>()
+                        .Where(x => x.CharacterName == characterName)
+                        .Set(x => x.CharacterAliveStatus, false)
+                        .Update();
+
+                    return true;
+                }
+                else if(status.ToLower() == "alive")
+                {
+                    await supabase.From<Character>()
+                        .Where(x => x.CharacterName == characterName)
+                        .Set(x => x.CharacterAliveStatus, false)
+                        .Update();
+
+                    return true;
+                }
+                else
+                {
+                    return false;
+                }
+            }
+            else
+            {
+                return false;
+            }
+        }
+
+        #endregion
     }
 }

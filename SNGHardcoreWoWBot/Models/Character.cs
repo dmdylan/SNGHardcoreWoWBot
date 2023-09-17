@@ -21,6 +21,9 @@ namespace SNGHardcoreWoWBot.Models
         [Column("class")]
         public string CharacterClass { get; set; } = string.Empty;
 
+        [Column("level")]
+        public int CharacterLevel { get; set; } = 1;
+
         [Column("status")]
         public bool CharacterAliveStatus { get; set; }
     }
