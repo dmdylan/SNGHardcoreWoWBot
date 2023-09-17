@@ -1,6 +1,7 @@
 ﻿using DSharpPlus.Entities;
 using SNGHardcoreWoWBot.Models;
 using Supabase;
+using System.Reflection.Metadata.Ecma335;
 
 namespace SupabaseStuff
 {
@@ -52,6 +53,16 @@ namespace SupabaseStuff
             };
 
             await supabase.From<Character>().Insert(model);
+        }
+
+        public static async Task<Character> RetrieveSinglePlayerCharacter(DiscordUser user, string characterName)
+        {
+            var player = RetrievePlayer(user);
+
+            var character = await supabase.From<Character>().Where(x => x.CharacterOwner == user.Id 
+            && x.CharacterName.ToLower() == characterName.ToLower()).Get();
+
+            return character.Model;
         }
 
         public static async Task<List<Character>> RetrieverAllPlayerCharacters(DiscordUser discordUser)
