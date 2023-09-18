@@ -1,7 +1,6 @@
 ﻿using DSharpPlus.Entities;
 using SNGHardcoreWoWBot.Models;
 using Supabase;
-using System.Diagnostics;
 
 namespace SupabaseStuff
 {
@@ -96,14 +95,16 @@ namespace SupabaseStuff
 
         public static async Task LevelUpCharacter(DiscordUser user, string character)
         {
-            //var result = await RetrieveSinglePlayerCharacter(user, character);
+            var result = await RetrieveSinglePlayerCharacter(user, character);
 
-            //if (result != null && !result.CharacterAliveStatus)
-            //    return;
+            if (result != null && !result.CharacterAliveStatus)
+                return;
 
-            await supabase.From<Character>()
+            var newCharacterLevel = result.CharacterLevel + 1;
+
+            var updatedCharacter = await supabase.From<Character>()
                 .Where(x => x.CharacterName.ToLower() == character.ToLower())
-                .Set(x => x.CharacterLevel, 2)
+                .Set(x => x.CharacterLevel, newCharacterLevel)
                 .Update();
         }
 
