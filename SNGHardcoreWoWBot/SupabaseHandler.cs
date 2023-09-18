@@ -68,10 +68,22 @@ namespace SupabaseStuff
         {
             var player = await RetrievePlayer(user);
 
-            var character = await supabase.From<Character>().Where(x => x.CharacterOwner == user.Id
-            && x.CharacterName.ToLower() == characterName.ToLower()).Single();
+            if (player != null)
+            {
+                var character = await supabase.From<Character>().Where(x => x.CharacterOwner == user.Id
+                && x.CharacterName.ToLower() == characterName.ToLower()).Single();
 
-            return character;
+                if (character != null)
+                    return character;
+                else
+                {
+                    return null;
+                }
+            }
+            else
+            {
+                return null;
+            }
         }
 
         public static async Task<List<Character>> RetrieverAllPlayerCharacters(DiscordUser discordUser)
@@ -95,14 +107,14 @@ namespace SupabaseStuff
 
         public static async Task LevelUpCharacter(DiscordUser user, string character)
         {
-            var result = await RetrieveSinglePlayerCharacter(user, character);
+            //var result = await RetrieveSinglePlayerCharacter(user, character);
 
-            if (result != null && !result.CharacterAliveStatus)
-                return;
+            //if (result != null && !result.CharacterAliveStatus)
+            //    return;
 
             await supabase.From<Character>()
                 .Where(x => x.CharacterName == character)
-                .Set(x => x.CharacterLevel, result.CharacterLevel++)
+                .Set(x => x.CharacterLevel, 2)
                 .Update();
         }
 

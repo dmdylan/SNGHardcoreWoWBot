@@ -42,9 +42,10 @@ namespace SNGHardcoreWoWBot.Commands
 
             if (list != null)
             {
-                foreach (var character in list)
+                for (int i = 0; i < list.Count; i++)
                 {
-                    var embed = CreateCharacterDiscordEmbed(character);
+                    DiscordEmbed embed = CreateCharacterDiscordEmbed(list[i]);
+
                     await commandContext.Channel.SendMessageAsync(embed: embed);
                 }
             }
@@ -99,17 +100,17 @@ namespace SNGHardcoreWoWBot.Commands
 
         private DiscordEmbed CreateCharacterDiscordEmbed(Character character)
         {
-            var buidler = new DiscordEmbedBuilder
+            var builder = new DiscordEmbedBuilder()
             {
                 Title = character.CharacterName,
                 Color = CharacterColorPicker(character.CharacterClass),
             };
 
-            buidler.AddField($"{character.CharacterRace} {character.CharacterClass}", null);
-            buidler.AddField($"{character.CharacterLevel}", null);
-            buidler.AddField($"{(character.CharacterAliveStatus ? "Alive" : "Dead")}", null);
+            builder.AddField($"{character.CharacterRace} {character.CharacterClass}", "\u200B");
+            builder.AddField($"Level: {character.CharacterLevel}", "\u200B");
+            builder.AddField($"{(character.CharacterAliveStatus ? "Alive" : "Dead")}", "\u200B");
 
-            return buidler;
+            return builder;
         }
 
         private DiscordColor CharacterColorPicker(string characterClass)
