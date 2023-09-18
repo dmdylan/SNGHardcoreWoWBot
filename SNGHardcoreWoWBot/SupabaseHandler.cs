@@ -33,10 +33,7 @@ namespace SupabaseStuff
         {
             var result = await supabase.From<Player>().Where(x => x.DiscordID == user.Id).Single();
 
-            if (result != null)
-                return result;
-            else
-                return null;
+            return result;
         }
 
         public static async Task RemovePlayer(DiscordUser user)
@@ -61,29 +58,21 @@ namespace SupabaseStuff
             };
 
             await supabase.From<Character>().Insert(model);
-            Debug.WriteLine("Added new character");
         }
 
         public static async Task<Character> RetrieveSinglePlayerCharacter(DiscordUser user, string characterName)
         {
             var player = await RetrievePlayer(user);
 
+            var pc = new Character();
+
             if (player != null)
             {
-                var character = await supabase.From<Character>().Where(x => x.CharacterOwner == user.Id
-                && x.CharacterName.ToLower() == characterName.ToLower()).Single();
+                pc = await supabase.From<Character>()
+                    .Where(x => (x.CharacterOwner == user.Id) && (x.CharacterName.ToLower() == characterName.ToLower())).Single();
+            }
 
-                if (character != null)
-                    return character;
-                else
-                {
-                    return null;
-                }
-            }
-            else
-            {
-                return null;
-            }
+            return pc;
         }
 
         public static async Task<List<Character>> RetrieverAllPlayerCharacters(DiscordUser discordUser)
@@ -113,7 +102,7 @@ namespace SupabaseStuff
             //    return;
 
             await supabase.From<Character>()
-                .Where(x => x.CharacterName == character)
+                .Where(x => x.CharacterName.ToLower() == character.ToLower())
                 .Set(x => x.CharacterLevel, 2)
                 .Update();
         }
