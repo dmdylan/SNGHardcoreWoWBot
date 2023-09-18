@@ -13,7 +13,7 @@ namespace SNGHardcoreWoWBot.Commands
         {
             await commandContext.TriggerTypingAsync();
 
-            bool characterUpdated = await SupabaseHandler.UpdateCharacterStatus(commandContext.User, characterName, status);
+            bool characterUpdated = await SupabaseHandler.UpdateCharacterStatus(commandContext.User, characterName);
 
             if (characterUpdated)
             {
@@ -27,7 +27,7 @@ namespace SNGHardcoreWoWBot.Commands
 
         #region Character List Commands
 
-        [Command("characterlist")]
+        [Command("characters")]
         public async Task GetAllCharacters(CommandContext commandContext)
         {
             await commandContext.TriggerTypingAsync();
@@ -41,12 +41,18 @@ namespace SNGHardcoreWoWBot.Commands
             var list = await SupabaseHandler.RetrieverAllPlayerCharacters(commandContext.User);
 
             if (list != null)
-                await commandContext.RespondAsync(list.Count.ToString());
+            {
+                foreach (var character in list)
+                {
+                    var embed = CreateCharacterDiscordEmbed(character);
+                    await commandContext.Channel.SendMessageAsync(embed: embed);
+                }
+            }
             else
                 await commandContext.RespondAsync($"Could not find any characters for {commandContext.User.Username}!");
         }
 
-        [Command("characterlist")]
+        [Command("characters")]
         public async Task GetAllCharacters(CommandContext commandContext, DiscordMember member)
         {
             await commandContext.TriggerTypingAsync();
@@ -60,9 +66,33 @@ namespace SNGHardcoreWoWBot.Commands
             var list = await SupabaseHandler.RetrieverAllPlayerCharacters(member);
 
             if (list != null)
-                await commandContext.RespondAsync(list.Count.ToString());
+            {
+                foreach (var character in list)
+                {
+                    var embed = CreateCharacterDiscordEmbed(character);
+                    await commandContext.Channel.SendMessageAsync(embed: embed);
+                }
+            }
             else
                 await commandContext.RespondAsync($"Could not find any characters for {member.Username}!");
+        }
+
+        [Command("ding")]
+        public async Task LevelUpCharacter(CommandContext commandContext, string character)
+        {
+            await commandContext.TriggerTypingAsync();
+
+            var result = await SupabaseHandler.RetrieveSinglePlayerCharacter(commandContext.User, character);
+
+            if (result != null)
+            {
+                await SupabaseHandler.LevelUpCharacter(commandContext.User, character);
+                await commandContext.RespondAsync($"{character} has reached level {result.CharacterLevel}! Grats!");
+            }
+            else
+            {
+                await commandContext.RespondAsync($"Could not find character!");
+            }
         }
 
         #endregion Character List Commands
@@ -114,7 +144,7 @@ namespace SNGHardcoreWoWBot.Commands
                     return Constants.WarriorClassColorHexCode;
 
                 default:
-                    return null;
+                    return DiscordColor.None;
             }
         }
     }

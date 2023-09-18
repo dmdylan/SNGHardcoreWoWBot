@@ -1,7 +1,7 @@
 ﻿using DSharpPlus.Entities;
 using SNGHardcoreWoWBot.Models;
 using Supabase;
-using System.Reflection.Metadata.Ecma335;
+using System.Diagnostics;
 
 namespace SupabaseStuff
 {
@@ -31,10 +31,10 @@ namespace SupabaseStuff
 
         public static async Task<Player> RetrievePlayer(DiscordUser user)
         {
-            var result = await supabase.From<Player>().Where(x => x.DiscordID == user.Id).Get();
+            var result = await supabase.From<Player>().Where(x => x.DiscordID == user.Id).Single();
 
             if (result != null)
-                return result.Model;
+                return result;
             else
                 return null;
         }
@@ -55,20 +55,23 @@ namespace SupabaseStuff
                 CharacterName = characterName,
                 CharacterRace = characterRace,
                 CharacterClass = characterClass,
-                CharacterAliveStatus = true
+                CharacterAliveStatus = true,
+                CharacterLevel = 1,
+                CharacterOwner = user.Id
             };
 
             await supabase.From<Character>().Insert(model);
+            Debug.WriteLine("Added new character");
         }
 
         public static async Task<Character> RetrieveSinglePlayerCharacter(DiscordUser user, string characterName)
         {
             var player = await RetrievePlayer(user);
 
-            var character = await supabase.From<Character>().Where(x => x.CharacterOwner == user.Id 
-            && x.CharacterName.ToLower() == characterName.ToLower()).Get();
+            var character = await supabase.From<Character>().Where(x => x.CharacterOwner == user.Id
+            && x.CharacterName.ToLower() == characterName.ToLower()).Single();
 
-            return character.Model;
+            return character;
         }
 
         public static async Task<List<Character>> RetrieverAllPlayerCharacters(DiscordUser discordUser)
@@ -90,34 +93,31 @@ namespace SupabaseStuff
             return list;
         }
 
-        public static async Task<bool> UpdateCharacterStatus(DiscordUser discordUser, string characterName, string status)
+        public static async Task LevelUpCharacter(DiscordUser user, string character)
+        {
+            var result = await RetrieveSinglePlayerCharacter(user, character);
+
+            if (result != null && !result.CharacterAliveStatus)
+                return;
+
+            await supabase.From<Character>()
+                .Where(x => x.CharacterName == character)
+                .Set(x => x.CharacterLevel, result.CharacterLevel++)
+                .Update();
+        }
+
+        public static async Task<bool> UpdateCharacterStatus(DiscordUser discordUser, string characterName)
         {
             var character = await RetrieveSinglePlayerCharacter(discordUser, characterName);
 
             if (character != null)
             {
-                if (status.ToLower() == "dead")
-                {
-                    await supabase.From<Character>()
-                        .Where(x => x.CharacterName == characterName)
-                        .Set(x => x.CharacterAliveStatus, false)
-                        .Update();
+                await supabase.From<Character>()
+                    .Where(x => x.CharacterName == characterName)
+                    .Set(x => x.CharacterAliveStatus, false)
+                    .Update();
 
-                    return true;
-                }
-                else if(status.ToLower() == "alive")
-                {
-                    await supabase.From<Character>()
-                        .Where(x => x.CharacterName == characterName)
-                        .Set(x => x.CharacterAliveStatus, false)
-                        .Update();
-
-                    return true;
-                }
-                else
-                {
-                    return false;
-                }
+                return true;
             }
             else
             {
@@ -125,6 +125,6 @@ namespace SupabaseStuff
             }
         }
 
-        #endregion
+        #endregion Character Tasks
     }
 }

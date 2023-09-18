@@ -11,7 +11,7 @@ namespace SNGHardcoreWoWBot.Commands
         {
             await commandContext.TriggerTypingAsync();
 
-            if(await SupabaseHandler.RetrievePlayer(commandContext.User) != null)
+            if (await SupabaseHandler.RetrievePlayer(commandContext.User) != null)
             {
                 await commandContext.RespondAsync($"Player is already registered!");
                 return;
@@ -31,7 +31,6 @@ namespace SNGHardcoreWoWBot.Commands
             {
                 await SupabaseHandler.RemovePlayer(commandContext.User);
                 await commandContext.RespondAsync($"{commandContext.User.Username} removed!");
-
             }
             else
             {
@@ -40,9 +39,74 @@ namespace SNGHardcoreWoWBot.Commands
         }
 
         [Command("addcharacter")]
-        public async Task RegisterPlayerCharacterCommand(CommandContext commandContext, string characterName)
+        public async Task RegisterPlayerCharacterCommand(CommandContext commandContext, string characterName, string race, string characterClass)
         {
-            await commandContext.RespondAsync($"{characterName} added for {commandContext.User.Username}");
+            await commandContext.TriggerTypingAsync();
+
+            string infoTest = CheckProperCharacterInfo(race, characterClass);
+
+            if (!string.IsNullOrEmpty(infoTest))
+            {
+                if (infoTest == "race")
+                {
+                    await commandContext.RespondAsync("Incorrect character race!");
+                }
+                else if (infoTest == "character")
+                {
+                    await commandContext.RespondAsync("Incorrect character class!");
+                }
+                else
+                {
+                    await commandContext.RespondAsync("Incorrect character race and class!");
+                }
+            }
+            else
+            {
+                await SupabaseHandler.AddNewCharacter(commandContext.User, characterName, race, characterClass);
+
+                await commandContext.RespondAsync($"{characterName} added for {commandContext.User.Username}");
+            }
+        }
+
+        private string CheckProperCharacterInfo(string race, string characterClass)
+        {
+            bool raceIsCorrect = false;
+            bool characterIsCorrect = false;
+
+            for (int i = 0; i < Constants.RaceNamesArray.Length; i++)
+            {
+                if (Constants.RaceNamesArray[i] == race)
+                {
+                    raceIsCorrect = true;
+                    break;
+                }
+            }
+
+            for (int i = 0; i < Constants.ClassNamesArray.Length; i++)
+            {
+                if (Constants.ClassNamesArray[i] == characterClass)
+                {
+                    characterIsCorrect = true;
+                    break;
+                }
+            }
+
+            if (raceIsCorrect && characterIsCorrect)
+            {
+                return string.Empty;
+            }
+            else if (!raceIsCorrect && characterIsCorrect)
+            {
+                return "race";
+            }
+            else if (raceIsCorrect && !characterIsCorrect)
+            {
+                return "character";
+            }
+            else
+            {
+                return "both";
+            }
         }
     }
 }
