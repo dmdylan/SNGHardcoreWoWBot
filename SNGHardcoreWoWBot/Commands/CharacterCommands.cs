@@ -8,6 +8,8 @@ namespace SNGHardcoreWoWBot.Commands
 {
     internal class CharacterCommands : BaseCommandModule
     {
+        //TODO: Require character ID number as parameter
+
         #region Status Commands
 
         [Command("death")]
@@ -104,6 +106,7 @@ namespace SNGHardcoreWoWBot.Commands
 
         #region Helper Methods
 
+        //TODO: Add character ID number to this
         private DiscordEmbed CreateCharacterDiscordEmbed(Character character)
         {
             var builder = new DiscordEmbedBuilder()

@@ -15,7 +15,7 @@ namespace DiscordStuff
                 Token = ConfigurationManager.AppSettings.Get("discord_token"),
                 TokenType = TokenType.Bot,
                 Intents = DiscordIntents.All,
-                MinimumLogLevel = LogLevel.Debug
+                MinimumLogLevel = LogLevel.Information
             });
 
             var commands = discord.UseCommandsNext(new CommandsNextConfiguration()

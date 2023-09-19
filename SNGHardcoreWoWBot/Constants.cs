@@ -5,7 +5,7 @@ namespace SNGHardcoreWoWBot
     internal static class Constants
     {
         public static string[] ClassNamesArray { get; private set; } = { "Druid", "Hunter", "Mage", "Paladin", "Priest", "Rogue", "Shaman", "Warlock", "Warrior" };
-        public static string[] RaceNamesArray { get; private set; } = { "Human", "Gnome", "Dwarf", "Night Elf", "Troll", "Orc", "Tauren", "Undead" };
+        public static string[] RaceNamesArray { get; private set; } = { "Human", "Gnome", "Dwarf", "NightElf", "Troll", "Orc", "Tauren", "Undead" };
 
         #region Class Color Hex Codes
 
@@ -40,7 +40,7 @@ namespace SNGHardcoreWoWBot
         public static string HumanRaceName { get; private set; } = "Human";
         public static string GnomeRaceName { get; private set; } = "Gnome";
         public static string DwarfRaceName { get; private set; } = "Dwarf";
-        public static string NightElfRaceName { get; private set; } = "Night Elf";
+        public static string NightElfRaceName { get; private set; } = "NightElf";
         public static string TrollRaceName { get; private set; } = "Troll";
         public static string OrcRaceName { get; private set; } = "Orc";
         public static string TaurenRaceName { get; private set; } = "Tauren";
