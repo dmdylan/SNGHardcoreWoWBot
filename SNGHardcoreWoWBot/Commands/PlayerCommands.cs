@@ -22,6 +22,7 @@ namespace SNGHardcoreWoWBot.Commands
             playerEmbed.AddField("!unregister", "Remove yourself to the database");
             playerEmbed.AddField("!addcharacter CharacterName CharacterRace CharacterClass", "Adds a new character at level 1");
             playerEmbed.AddField("!addcharacter CharacterName CharacterRace CharacterClass CurrentLevel", "Adds a new character at level #");
+            playerEmbed.AddField("!remove CharacterName CharacterID", "Remove a saved character");
             playerEmbed.AddField("!deathcount", "Retrieve the total number of deaths for yourself");
             playerEmbed.AddField("!deathcount @mention", "Retrieve the total number of deaths for @mention");
 
@@ -31,14 +32,16 @@ namespace SNGHardcoreWoWBot.Commands
                 Color = new DiscordColor("#15f1f1")
             };
 
-            characterEmbed.AddField("!ding CharacterName", "Level up a character");
-            characterEmbed.AddField("!death CharacterName", "Change the status of your character");
+            characterEmbed.AddField("!ding CharacterName CharacterID", "Level up a character");
+            characterEmbed.AddField("!death CharacterName CharacterID", "Change the status of your character");
             characterEmbed.AddField("!characters", "Retrieve a list of all your characters");
             characterEmbed.AddField("!characters @mention", "Retrieve a list of all @mention's characters");
 
             await commandContext.Channel.SendMessageAsync(embed: playerEmbed);
             await commandContext.Channel.SendMessageAsync(embed: characterEmbed);
         }
+
+        #region Player Management Commands
 
         [Command("register")]
         public async Task RegisterPlayerCommand(CommandContext commandContext)
@@ -72,27 +75,27 @@ namespace SNGHardcoreWoWBot.Commands
             }
         }
 
+        #endregion Player Management Commands
+
+        #region Character Management Commands
+
         [Command("addcharacter")]
         public async Task RegisterPlayerCharacterCommand(CommandContext commandContext, string characterName, string race, string characterClass)
         {
             await commandContext.TriggerTypingAsync();
 
-            string infoTest = CheckProperCharacterInfo(race, characterClass);
+            bool[] infoTest = CheckProperCharacterInfo(characterName, race, characterClass);
 
-            if (!string.IsNullOrEmpty(infoTest))
+            if (infoTest.Contains(false))
             {
-                if (infoTest == "race")
-                {
+                if (!infoTest[0])
+                    await commandContext.RespondAsync("Invalid character name!");
+
+                if (!infoTest[1])
                     await commandContext.RespondAsync("Incorrect character race!");
-                }
-                else if (infoTest == "character")
-                {
+
+                if (!infoTest[2])
                     await commandContext.RespondAsync("Incorrect character class!");
-                }
-                else
-                {
-                    await commandContext.RespondAsync("Incorrect character race and class!");
-                }
             }
             else
             {
@@ -107,22 +110,18 @@ namespace SNGHardcoreWoWBot.Commands
         {
             await commandContext.TriggerTypingAsync();
 
-            string infoTest = CheckProperCharacterInfo(race, characterClass);
+            bool[] infoTest = CheckProperCharacterInfo(characterName, race, characterClass);
 
-            if (!string.IsNullOrEmpty(infoTest))
+            if (infoTest.Contains(false))
             {
-                if (infoTest == "race")
-                {
+                if (!infoTest[0])
+                    await commandContext.RespondAsync("Invalid character name!");
+
+                if (!infoTest[1])
                     await commandContext.RespondAsync("Incorrect character race!");
-                }
-                else if (infoTest == "character")
-                {
+
+                if (!infoTest[2])
                     await commandContext.RespondAsync("Incorrect character class!");
-                }
-                else
-                {
-                    await commandContext.RespondAsync("Incorrect character race and class!");
-                }
             }
             else
             {
@@ -131,6 +130,30 @@ namespace SNGHardcoreWoWBot.Commands
                 await commandContext.RespondAsync($"{characterName} added for {commandContext.User.Username}");
             }
         }
+
+        [Command("remove")]
+        public async Task RemovePlayerCharacter(CommandContext commandContext, string characterName, int characterID)
+        {
+            await commandContext.TriggerTypingAsync();
+
+            var deleteTask = SupabaseHandler.RemoveCharacter(commandContext.User, characterName, characterID);
+
+            if (deleteTask.IsCompletedSuccessfully)
+            {
+                await commandContext.RespondAsync($"{characterName} removed!");
+            }
+            else
+            {
+                if (deleteTask.Exception == null)
+                    await commandContext.RespondAsync($"Could not remove {characterName} because {characterName} has already been removed or was never saved!");
+                else
+                    await commandContext.RespondAsync($"Could not remove {characterName} because {deleteTask.Exception}");
+            }
+        }
+
+        #endregion Character Management Commands
+
+        #region Player Stats Commands
 
         [Command("deathcount")]
         public async Task GetPlayerDeathCount(CommandContext commandContext)
@@ -168,10 +191,21 @@ namespace SNGHardcoreWoWBot.Commands
             await commandContext.RespondAsync($"Total deaths for {member.Mention}: {deathCount}");
         }
 
-        private string CheckProperCharacterInfo(string race, string characterClass)
+        #endregion Player Stats Commands
+
+        private bool[] CheckProperCharacterInfo(string characterName, string race, string characterClass)
         {
+            bool characterNameIsCorrect = true;
             bool raceIsCorrect = false;
             bool characterIsCorrect = false;
+
+            var name = characterName.ToCharArray();
+
+            for (int i = 0; i < name.Length; i++)
+            {
+                if (!char.IsLetter(name[i]))
+                    characterNameIsCorrect = false;
+            }
 
             for (int i = 0; i < Constants.RaceNamesArray.Length; i++)
             {
@@ -191,22 +225,8 @@ namespace SNGHardcoreWoWBot.Commands
                 }
             }
 
-            if (raceIsCorrect && characterIsCorrect)
-            {
-                return string.Empty;
-            }
-            else if (!raceIsCorrect && characterIsCorrect)
-            {
-                return "race";
-            }
-            else if (raceIsCorrect && !characterIsCorrect)
-            {
-                return "character";
-            }
-            else
-            {
-                return "both";
-            }
+            bool[] result = new[] { characterNameIsCorrect, raceIsCorrect, characterIsCorrect };
+            return result;
         }
     }
 }

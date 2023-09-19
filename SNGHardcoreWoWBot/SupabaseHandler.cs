@@ -50,6 +50,13 @@ namespace SupabaseStuff
             return player.DeathCount;
         }
 
+        public static async Task<int> CheckPlayerCharacterCount(DiscordUser user)
+        {
+            var characterCount = await supabase.From<Character>().Select("*").Where(x => x.CharacterOwner == user.Id).Get();
+
+            return characterCount.Models.Count();
+        }
+
         #endregion Player Tasks
 
         #region Character Tasks
@@ -69,10 +76,21 @@ namespace SupabaseStuff
             await supabase.From<Character>().Insert(model);
         }
 
-        public static async Task<Character> RetrieveSinglePlayerCharacter(DiscordUser user, string characterName)
+        public static async Task RemoveCharacter(DiscordUser user, string characterName, int characterID)
+        {
+            await supabase.From<Character>()
+                .Where(x => x.CharacterOwner == user.Id)
+                .Where(x => x.CharacterName == characterName)
+                .Where(x => x.Id == characterID)
+                .Delete();
+        }
+
+        public static async Task<Character> RetrieveSinglePlayerCharacter(DiscordUser user, string characterName, int characterID)
         {
             var pc = await supabase.From<Character>()
-                .Where(x => x.CharacterOwner == user.Id && x.CharacterName == characterName)
+                .Where(x => x.CharacterOwner == user.Id)
+                .Where(x => x.CharacterName == characterName)
+                .Where(x => x.Id == characterID)
                 .Single();
 
             return pc;
@@ -97,9 +115,9 @@ namespace SupabaseStuff
             return list;
         }
 
-        public static async Task LevelUpCharacter(DiscordUser user, string character)
+        public static async Task LevelUpCharacter(DiscordUser user, string character, int characterID)
         {
-            var result = await RetrieveSinglePlayerCharacter(user, character);
+            var result = await RetrieveSinglePlayerCharacter(user, character, characterID);
 
             if (result != null && result.CharacterAliveStatus == false)
                 return;
@@ -112,10 +130,11 @@ namespace SupabaseStuff
             }
         }
 
-        public static async Task SetCharacterDeath(DiscordUser discordUser, string characterName)
+        public static async Task SetCharacterDeath(DiscordUser discordUser, string characterName, int characterID)
         {
             var player = await RetrievePlayer(discordUser);
-            var character = await RetrieveSinglePlayerCharacter(discordUser, characterName);
+
+            var character = await RetrieveSinglePlayerCharacter(discordUser, characterName, characterID);
 
             if (character != null)
             {

@@ -8,20 +8,32 @@ namespace SNGHardcoreWoWBot.Commands
 {
     internal class CharacterCommands : BaseCommandModule
     {
-        //TODO: Require character ID number as parameter
-
         #region Status Commands
 
         [Command("death")]
-        public async Task ChangeCharacterStatus(CommandContext commandContext, string characterName)
+        public async Task ChangeCharacterStatus(CommandContext commandContext, string characterName, int characterID)
         {
             await commandContext.TriggerTypingAsync();
 
-            await SupabaseHandler.SetCharacterDeath(commandContext.User, characterName);
+            var character = await SupabaseHandler.RetrieveSinglePlayerCharacter(commandContext.User, characterName, characterID);
+
+            if (character == null)
+            {
+                await commandContext.RespondAsync($"Could not find {characterName}");
+                return;
+            }
+
+            if (character.CharacterAliveStatus == false)
+            {
+                await commandContext.RespondAsync($"{characterName} is already dead");
+                return;
+            }
+
+            await SupabaseHandler.SetCharacterDeath(commandContext.User, characterName, characterID);
 
             await commandContext.RespondAsync($"RIP {characterName}");
 
-            var character = await SupabaseHandler.RetrieveSinglePlayerCharacter(commandContext.User, characterName);
+            character = await SupabaseHandler.RetrieveSinglePlayerCharacter(commandContext.User, characterName, characterID);
 
             var embed = CreateCharacterDiscordEmbed(character);
 
@@ -29,17 +41,29 @@ namespace SNGHardcoreWoWBot.Commands
         }
 
         [Command("ding")]
-        public async Task LevelUpCharacter(CommandContext commandContext, string character)
+        public async Task LevelUpCharacter(CommandContext commandContext, string character, int characterID)
         {
             await commandContext.TriggerTypingAsync();
 
-            var result = await SupabaseHandler.RetrieveSinglePlayerCharacter(commandContext.User, character);
+            var result = await SupabaseHandler.RetrieveSinglePlayerCharacter(commandContext.User, character, characterID);
 
             if (result != null)
             {
-                await SupabaseHandler.LevelUpCharacter(commandContext.User, character);
+                if (result.CharacterAliveStatus == false)
+                {
+                    await commandContext.RespondAsync($"{character} is dead!");
+                    return;
+                }
 
-                await commandContext.RespondAsync($"{character} has reached level {result.CharacterLevel + 1}! Grats!");
+                await SupabaseHandler.LevelUpCharacter(commandContext.User, character, characterID);
+
+                result = await SupabaseHandler.RetrieveSinglePlayerCharacter(commandContext.User, character, characterID);
+
+                await commandContext.RespondAsync($"{character} has reached level {result.CharacterLevel}! Grats!");
+
+                var embed = CreateCharacterDiscordEmbed(result);
+
+                await commandContext.Channel.SendMessageAsync(embed: embed);
             }
             else
             {
@@ -60,6 +84,11 @@ namespace SNGHardcoreWoWBot.Commands
             {
                 await commandContext.RespondAsync($"Could not find {commandContext.User.Username}! Make sure they are registered first!");
                 return;
+            }
+
+            if (await SupabaseHandler.CheckPlayerCharacterCount(commandContext.User) == 0)
+            {
+                await commandContext.RespondAsync($"{commandContext.User.Username} has no characters saved!");
             }
 
             var list = await SupabaseHandler.RetrieverAllPlayerCharacters(commandContext.User);
@@ -106,7 +135,6 @@ namespace SNGHardcoreWoWBot.Commands
 
         #region Helper Methods
 
-        //TODO: Add character ID number to this
         private DiscordEmbed CreateCharacterDiscordEmbed(Character character)
         {
             var builder = new DiscordEmbedBuilder()
@@ -115,9 +143,8 @@ namespace SNGHardcoreWoWBot.Commands
                 Color = CharacterColorPicker(character.CharacterClass),
             };
 
-            builder.AddField($"{character.CharacterRace} {character.CharacterClass}", "\u200B");
-            builder.AddField($"Level: {character.CharacterLevel}", "\u200B");
-            builder.AddField($"{(character.CharacterAliveStatus ? "Alive" : "Dead")}", "\u200B");
+            builder.AddField($"{character.CharacterRace} {character.CharacterClass}", $"Level: {character.CharacterLevel}");
+            builder.AddField($"{(character.CharacterAliveStatus ? "Alive" : "Dead")}", $"ID: {character.Id}");
 
             return builder;
         }
