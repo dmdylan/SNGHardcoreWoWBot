@@ -8,22 +8,44 @@ namespace SNGHardcoreWoWBot.Commands
 {
     internal class CharacterCommands : BaseCommandModule
     {
-        [Command("characterstatus")]
-        public async Task ChangeCharacterStatus(CommandContext commandContext, string characterName, string status)
+        #region Status Commands
+
+        [Command("death")]
+        public async Task ChangeCharacterStatus(CommandContext commandContext, string characterName)
         {
             await commandContext.TriggerTypingAsync();
 
-            bool characterUpdated = await SupabaseHandler.UpdateCharacterStatus(commandContext.User, characterName);
+            await SupabaseHandler.SetCharacterDeath(commandContext.User, characterName);
 
-            if (characterUpdated)
+            await commandContext.RespondAsync($"RIP {characterName}");
+
+            var character = await SupabaseHandler.RetrieveSinglePlayerCharacter(commandContext.User, characterName);
+
+            var embed = CreateCharacterDiscordEmbed(character);
+
+            await commandContext.Channel.SendMessageAsync(embed: embed);
+        }
+
+        [Command("ding")]
+        public async Task LevelUpCharacter(CommandContext commandContext, string character)
+        {
+            await commandContext.TriggerTypingAsync();
+
+            var result = await SupabaseHandler.RetrieveSinglePlayerCharacter(commandContext.User, character);
+
+            if (result != null)
             {
-                await commandContext.RespondAsync($"{characterName}'s status updated!");
+                await SupabaseHandler.LevelUpCharacter(commandContext.User, character);
+
+                await commandContext.RespondAsync($"{character} has reached level {result.CharacterLevel + 1}! Grats!");
             }
             else
             {
-                await commandContext.RespondAsync($"Could not update character status!");
+                await commandContext.RespondAsync($"Could not find character!");
             }
         }
+
+        #endregion Status Commands
 
         #region Character List Commands
 
@@ -60,7 +82,7 @@ namespace SNGHardcoreWoWBot.Commands
 
             if (await SupabaseHandler.RetrievePlayer(member) == null)
             {
-                await commandContext.RespondAsync($"Could not find {member.Username}! Make sure they are registered first!");
+                await commandContext.RespondAsync($"Could not find {member.Mention}! Make sure they are registered first!");
                 return;
             }
 
@@ -75,28 +97,12 @@ namespace SNGHardcoreWoWBot.Commands
                 }
             }
             else
-                await commandContext.RespondAsync($"Could not find any characters for {member.Username}!");
-        }
-
-        [Command("ding")]
-        public async Task LevelUpCharacter(CommandContext commandContext, string character)
-        {
-            await commandContext.TriggerTypingAsync();
-
-            var result = await SupabaseHandler.RetrieveSinglePlayerCharacter(commandContext.User, character);
-
-            if (result != null)
-            {
-                await SupabaseHandler.LevelUpCharacter(commandContext.User, character);
-                await commandContext.RespondAsync($"{character} has reached level {result.CharacterLevel}! Grats!");
-            }
-            else
-            {
-                await commandContext.RespondAsync($"Could not find character!");
-            }
+                await commandContext.RespondAsync($"Could not find any characters for {member.Mention}!");
         }
 
         #endregion Character List Commands
+
+        #region Helper Methods
 
         private DiscordEmbed CreateCharacterDiscordEmbed(Character character)
         {
@@ -148,5 +154,7 @@ namespace SNGHardcoreWoWBot.Commands
                     return DiscordColor.None;
             }
         }
+
+        #endregion Helper Methods
     }
 }

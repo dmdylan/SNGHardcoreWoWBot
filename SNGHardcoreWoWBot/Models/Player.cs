@@ -11,5 +11,8 @@ namespace SNGHardcoreWoWBot.Models
 
         [Column("discord_name")]
         public string DiscordName { get; set; } = "";
+
+        [Column("total_deaths")]
+        public int DeathCount { get; set; }
     }
 }

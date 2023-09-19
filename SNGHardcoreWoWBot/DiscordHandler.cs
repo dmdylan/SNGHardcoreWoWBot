@@ -2,6 +2,7 @@
 using DSharpPlus.CommandsNext;
 using Microsoft.Extensions.Logging;
 using SNGHardcoreWoWBot.Commands;
+using System.Configuration;
 
 namespace DiscordStuff
 {
@@ -11,7 +12,7 @@ namespace DiscordStuff
         {
             var discord = new DiscordClient(new DiscordConfiguration
             {
-                Token = "MTE0OTkyODIwNDI5MTgwNTI0Ng.GarktY.Teht5l081cCloh26Fc4EATsB4Z8H2TOpPf8IMM",
+                Token = ConfigurationManager.AppSettings.Get("discord_token"),
                 TokenType = TokenType.Bot,
                 Intents = DiscordIntents.All,
                 MinimumLogLevel = LogLevel.Debug
@@ -22,7 +23,7 @@ namespace DiscordStuff
                 StringPrefixes = new[] { "!" }
             });
 
-            commands.RegisterCommands<PlayerSetupCommands>();
+            commands.RegisterCommands<PlayerCommands>();
             commands.RegisterCommands<CharacterCommands>();
 
             await discord.ConnectAsync();

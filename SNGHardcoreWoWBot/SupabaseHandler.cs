@@ -40,11 +40,21 @@ namespace SupabaseStuff
             await supabase.From<Player>().Where(x => x.DiscordID == user.Id).Delete();
         }
 
+        public static async Task<int> CheckPlayerDeathCount(DiscordUser user)
+        {
+            var player = await supabase.From<Player>().Where(x => x.DiscordID == user.Id).Single();
+
+            if (player == null)
+                return 0;
+
+            return player.DeathCount;
+        }
+
         #endregion Player Tasks
 
         #region Character Tasks
 
-        public static async Task AddNewCharacter(DiscordUser user, string characterName, string characterRace, string characterClass)
+        public static async Task AddNewCharacter(DiscordUser user, string characterName, string characterRace, string characterClass, int level = 1)
         {
             var model = new Character
             {
@@ -52,7 +62,7 @@ namespace SupabaseStuff
                 CharacterRace = characterRace,
                 CharacterClass = characterClass,
                 CharacterAliveStatus = true,
-                CharacterLevel = 1,
+                CharacterLevel = level,
                 CharacterOwner = user.Id
             };
 
@@ -61,15 +71,9 @@ namespace SupabaseStuff
 
         public static async Task<Character> RetrieveSinglePlayerCharacter(DiscordUser user, string characterName)
         {
-            var player = await RetrievePlayer(user);
-
-            var pc = new Character();
-
-            if (player != null)
-            {
-                pc = await supabase.From<Character>()
-                    .Where(x => (x.CharacterOwner == user.Id) && (x.CharacterName.ToLower() == characterName.ToLower())).Single();
-            }
+            var pc = await supabase.From<Character>()
+                .Where(x => x.CharacterOwner == user.Id && x.CharacterName == characterName)
+                .Single();
 
             return pc;
         }
@@ -97,33 +101,29 @@ namespace SupabaseStuff
         {
             var result = await RetrieveSinglePlayerCharacter(user, character);
 
-            if (result != null && !result.CharacterAliveStatus)
+            if (result != null && result.CharacterAliveStatus == false)
                 return;
 
-            var newCharacterLevel = result.CharacterLevel + 1;
+            if (result != null)
+            {
+                result.CharacterLevel += 1;
 
-            var updatedCharacter = await supabase.From<Character>()
-                .Where(x => x.CharacterName.ToLower() == character.ToLower())
-                .Set(x => x.CharacterLevel, newCharacterLevel)
-                .Update();
+                await result.Update<Character>();
+            }
         }
 
-        public static async Task<bool> UpdateCharacterStatus(DiscordUser discordUser, string characterName)
+        public static async Task SetCharacterDeath(DiscordUser discordUser, string characterName)
         {
+            var player = await RetrievePlayer(discordUser);
             var character = await RetrieveSinglePlayerCharacter(discordUser, characterName);
 
             if (character != null)
             {
-                await supabase.From<Character>()
-                    .Where(x => x.CharacterName == characterName)
-                    .Set(x => x.CharacterAliveStatus, false)
-                    .Update();
+                player.DeathCount += 1;
+                character.CharacterAliveStatus = false;
 
-                return true;
-            }
-            else
-            {
-                return false;
+                await player.Update<Player>();
+                await character.Update<Character>();
             }
         }
 
